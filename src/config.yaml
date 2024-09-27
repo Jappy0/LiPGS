@@ -1,8 +1,0 @@
-plink:
-  bfile: "/hpcfs/users/a1236780/Repos/LiPGS/ConLiGen/Conligen_filtered_withrsid"
-  pheno: "/hpcfs/users/a1236780/Repos/LiPGS/output/ConLiGen_european_phenotypes_binary.txt"
-  covar: "/hpcfs/users/a1236780/Repos/LiPGS/ConLiGen/covariates_for_adjustment.txt"
-
-prscs:
-  path: "/path/to/PRScs.py"
-  weight_file: "/path/to/weight_file.txt"
