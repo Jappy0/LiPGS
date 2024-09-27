@@ -1,0 +1,1 @@
+Pipeline for a Polygenic score for lithium treatment response (LiPGS) in patients with Bipolar Disorder (BD)
