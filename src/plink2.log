@@ -1,0 +1,14 @@
+PLINK v2.00a5.12LM 64-bit Intel (25 Jun 2024)
+Options in effect:
+  --bfile /hpcfs/users/a1236780/Repos/LiPGS/output/Conligen_filtered_genotype_qc
+  --covar /hpcfs/users/a1236780/Repos/LiPGS/output/european_covariates.txt  
+  --glm
+
+Hostname: p2-cpu-18
+Working directory: /hpcfs/users/a1236780/Repos/LiPGS/src
+Start time: Wed Sep 25 22:54:37 2024
+
+Error: Invalid --covar argument sequence.
+For more info, try "plink2 --help <flag name>" or "plink2 --help | more".
+
+End time: Wed Sep 25 22:54:37 2024

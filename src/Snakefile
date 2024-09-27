@@ -1,0 +1,75 @@
+# Snakefile for 5-Fold GWAS and PGS analysis
+
+# Define the input files and parameters
+configfile: "config.yaml"
+
+# Rule to create phenotype folds
+rule create_folds:
+    input:
+        pheno=config["plink"]["pheno"]
+    output:
+        expand("folds/fold_{fold}.txt", fold=range(5))
+    shell:
+        """
+        # Create directory for folds
+        mkdir -p folds
+        # Split phenotype file into 5 folds
+        awk 'NR==1{{print; next}} {{print | "shuf -n " . int(NR/5) . " - | sort -R"}}' {input.pheno} > folds/fold_{wildcards.fold}.txt
+        """
+
+# Rule to run GWAS for each fold
+rule run_gwas:
+    input:
+        bfile=config["plink"]["bfile"],
+        pheno="folds/fold_{fold}.txt",
+        covar=config["plink"]["covar"]
+    output:
+        summary_stats="results/gwas_fold_{fold}.txt",
+        log="results/gwas_fold_{fold}.log"
+    shell:
+        """
+        plink --bfile {input.bfile} \
+              --pheno {input.pheno} \
+              --covar {input.covar} \
+              --logistic \
+              --out {output.summary_stats} \
+              > {output.log}
+        """
+
+# Rule to calculate PGS using PRScs for each fold
+rule run_pgs:
+    input:
+        prscs_path=config["prscs"]["path"],
+        bfile=config["plink"]["bfile"],
+        weight_file=config["prscs"]["weight_file"],
+        pheno_file="folds/fold_{fold}.txt",
+        covar_file=config["plink"]["covar"],
+        summary_stats="results/gwas_fold_{fold}.txt"
+    output:
+        pgs_output="results/pgs_fold_{fold}.txt"
+    shell:
+        """
+        python {input.prscs_path} \
+            --bfile {input.bfile} \
+            --weight {input.weight_file} \
+            --out {output.pgs_output} \
+            --pheno {input.pheno_file} \
+            --covar {input.covar_file} \
+            --allow-no-sex
+        """
+
+# Rule to combine all PGS scores into a single output
+rule combine_pgs:
+    input:
+        expand("results/pgs_fold_{fold}.txt", fold=range(5))
+    output:
+        combined_pgs="results/combined_pgs.txt"
+    shell:
+        """
+        cat {input} > {output.combined_pgs}
+        """
+
+# Rule to run the entire pipeline
+rule all:
+    input:
+        "results/combined_pgs.txt"
