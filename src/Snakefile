@@ -1,75 +1,146 @@
-# Snakefile for 5-Fold GWAS and PGS analysis
-
 # Define the input files and parameters
 configfile: "config.yaml"
 
-# Rule to create phenotype folds
-rule create_folds:
-    input:
-        pheno=config["plink"]["pheno"]
+# Set the root directory based on the phenotype type (binary or continuous)
+root_dir = "output_binary/" if config["plink"]["pheno_type"] == "binary" else "output_alda/"
+
+# Step 1: Create the root directory if it does not exist
+rule create_root_dir:
     output:
-        expand("folds/fold_{fold}.txt", fold=range(5))
+        output_dir=root_dir
     shell:
         """
-        # Create directory for folds
-        mkdir -p folds
-        # Split phenotype file into 5 folds
-        awk 'NR==1{{print; next}} {{print | "shuf -n " . int(NR/5) . " - | sort -R"}}' {input.pheno} > folds/fold_{wildcards.fold}.txt
+        mkdir -p {output.output_dir}
         """
 
-# Rule to run GWAS for each fold
+# Step 2: Extract the phenotype according to the phenotype type (binary or continuous)
+rule extract_phenotype:
+    input:
+        pheno_file=config["plink"]["pheno_file"]
+    output:
+        binary_pheno=root_dir + "European_phenotype_binary.txt",
+        alda_pheno=root_dir + "European_phenotype_alda.txt"
+    run:
+        if config["plink"]["gwas_type"] == "binary":
+            shell("""
+                awk 'BEGIN {{FS="\t"; OFS="\t"}} NR==1 || $8 == "European" {{print $1, $2, $3+1}}' {input.pheno_file} > {output.binary_pheno}
+            """)
+        else:
+            shell("""
+                awk 'BEGIN {{FS="\t"; OFS="\t"}} NR==1 || $8 == "European" {{print $1, $2, $4}}' {input.pheno_file} > {output.alda_pheno}
+            """)
+
+# Step 3: Use `split_data.py` to generate datasets for the 5-fold cross-validation
+rule split_data:
+    input:
+        data=lambda wildcards: rules.extract_phenotype.output.binary_pheno if config["plink"]["gwas_type"] == "binary" else rules.extract_phenotype.output.alda_pheno,
+        bfile=config["plink"]["bfile"]
+    output:
+        discovery_files=expand(root_dir + "fold_data/discovery_{i}.txt", i=range(5)),
+        target_files=expand(root_dir + "fold_data/target_{i}.txt", i=range(5))
+    shell:
+        """
+        python split_data.py --phenotype_file {input.data} --plink_prefix {input.bfile} --output_dir {root_dir}/fold_data --num_groups 5
+        """
+
+# Step 4: Iteratively run GWAS for each fold using discovery data
 rule run_gwas:
     input:
-        bfile=config["plink"]["bfile"],
-        pheno="folds/fold_{fold}.txt",
-        covar=config["plink"]["covar"]
+        bfile=root_dir + "fold_data/discovery_{fold}",
+        pheno=root_dir + "fold_data/discovery_{fold}.txt",
+        covar=config["plink"]["covar_file"]
     output:
-        summary_stats="results/gwas_fold_{fold}.txt",
-        log="results/gwas_fold_{fold}.log"
+        summary_stats=root_dir + "gwas_fold_{fold}.assoc",
+        log=root_dir + "gwas_fold_{fold}.log"
+    params:
+        covar_name=config["plink"]["covar_name"]
+    run:
+        if config["plink"]["gwas_type"] == "binary":
+            shell("""
+                plink --bfile {input.bfile} \
+                    --pheno {input.pheno} \
+                    --covar {input.covar} \
+                    --covar-name {params.covar_name} \
+                    --allow-no-sex \
+                    --keep-allele-order \
+                    --real-ref-alleles \
+                    --logistic \
+                    --adjust \
+                    --all-pheno \
+                    --ci 0.95 \
+                    --make-bed \
+                    --out {output.summary_stats}
+                """)
+        else:
+            shell("""
+                plink --bfile {input.bfile} \
+                    --pheno {input.pheno} \
+                    --covar {input.covar} \
+                    --covar-name {params.covar_name} \
+                    --allow-no-sex \
+                    --keep-allele-order \
+                    --real-ref-alleles \
+                    --linear \
+                    --adjust \
+                    --all-pheno \
+                    --ci 0.95 \
+                    --make-bed \
+                    --out {output.summary_stats}
+                """)    
+
+# Step 5: Iteratively calculate PRS using PRScs with GWAS results
+rule run_prscs:
+    input:
+        ref_dir=config["prscs"]["ref_dir"],  
+        summary_stats=root_dir + "gwas_fold_{fold}.assoc",  
+        target_bim=root_dir + "fold_data/target_bim_{fold}",  
+        bfile=root_dir + "fold_data/target_{fold}",
+        # target_pheno=root_dir + "fold_data/target_{fold}.txt" 
+    output:
+        prscs_output=root_dir + "prs_fold_{fold}",  # Output from PRScs
+        plink_score_output=root_dir + "plink_prs_fold_{fold}.txt"  # Output from PLINK score
+    run:
+        # Step 1: Add A2 to summary stats
+        a2_file = f"{output.prscs_output}.a2"
+        shell(f"""
+            # Create a file with A2 alleles for merging
+            awk 'BEGIN {{FS="\t"; OFS="\t"}} 
+                {{if (NR==1) print $0, "A2"; else print $0, $5;}} 
+                {input.summary_stats} > {a2_file}
+
+            # Merge A2 into the summary stats using the SNP ID
+            join -t$'\t' -1 2 -2 1 <(sort -k2,2 {input.summary_stats}) <(sort -k1,1 {a2_file}) \
+                > {input.summary_stats}.merged
+        """)
+
+        # Step 2: Run PRScs to calculate PRS
+        shell(f"""
+            python {config['prscs']['path']} \
+                --ref_dir {input.ref_dir} \
+                --bim_prefix {input.target_bim} \
+                --sst_file {input.summary_stats}.merged \
+                --n_gwas \
+                --out {output.prscs_output} \
+
+            # Run PLINK to score the PRS
+            plink --bfile {input.bfile} \
+                --score {output.prscs_output} 2 4 6 \
+                --out {output.plink_score_output}
+        """)
+
+# Rule to combine all PRS scores into a single output
+rule combine_prs:
+    input:
+        expand(root_dir + "plink_prs_fold_{fold}.txt", fold=range(5))  # Input for each fold
+    output:
+        combined_prs=root_dir + "combined_prs.txt"  # Combined PRS output
     shell:
         """
-        plink --bfile {input.bfile} \
-              --pheno {input.pheno} \
-              --covar {input.covar} \
-              --logistic \
-              --out {output.summary_stats} \
-              > {output.log}
+        cat {input} > {output.combined_prs}
         """
 
-# Rule to calculate PGS using PRScs for each fold
-rule run_pgs:
-    input:
-        prscs_path=config["prscs"]["path"],
-        bfile=config["plink"]["bfile"],
-        weight_file=config["prscs"]["weight_file"],
-        pheno_file="folds/fold_{fold}.txt",
-        covar_file=config["plink"]["covar"],
-        summary_stats="results/gwas_fold_{fold}.txt"
-    output:
-        pgs_output="results/pgs_fold_{fold}.txt"
-    shell:
-        """
-        python {input.prscs_path} \
-            --bfile {input.bfile} \
-            --weight {input.weight_file} \
-            --out {output.pgs_output} \
-            --pheno {input.pheno_file} \
-            --covar {input.covar_file} \
-            --allow-no-sex
-        """
-
-# Rule to combine all PGS scores into a single output
-rule combine_pgs:
-    input:
-        expand("results/pgs_fold_{fold}.txt", fold=range(5))
-    output:
-        combined_pgs="results/combined_pgs.txt"
-    shell:
-        """
-        cat {input} > {output.combined_pgs}
-        """
 
 # Rule to run the entire pipeline
 rule all:
     input:
-        "results/combined_pgs.txt"
+        "combined_prs.txt"

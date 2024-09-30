@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+'''
+This script merges all scripts related to PRS-CS into one file.
+'''
+
 """
 PRS-CS: a polygenic prediction method that infers posterior SNP effect sizes under continuous shrinkage (CS) priors
 using GWAS summary statistics and an external LD reference panel.
@@ -19,19 +23,12 @@ python PRScs.py --ref_dir=PATH_TO_REFERENCE --bim_prefix=VALIDATION_BIM_PREFIX -
 import os
 import sys
 import getopt
-
-# import parse_genet
-# import mcmc_gtb
-# import gigrnd
-
 import numpy as np
 from scipy.stats import norm
 from scipy import linalg
 import h5py
-
 import math
 from numpy import random
-
 import numpy as np
 from scipy import linalg 
 from numpy import random
@@ -40,11 +37,9 @@ def psi(x, alpha, lam):
     f = -alpha*(math.cosh(x)-1.0)-lam*(math.exp(x)-x-1.0)
     return f
 
-
 def dpsi(x, alpha, lam):
     f = -alpha*math.sinh(x)-lam*(math.exp(x)-1.0)
     return f
-
 
 def g(x, sd, td, f1, f2):
     if (x >= -sd) and (x <= td):
@@ -55,7 +50,6 @@ def g(x, sd, td, f1, f2):
         f = f2
 
     return f
-
 
 def gigrnd(p, a, b):
     # setup -- sample from the two-parameter version gig(lam,omega)
@@ -200,7 +194,7 @@ def mcmc(a, b, phi, sst_dict, n, ld_blk, blk_size, n_iter, n_burnin, thin, chrom
         delta = random.gamma(a+b, 1.0/(psi+phi))
 
         for jj in range(p):
-            psi[jj] = gigrnd.gigrnd(a-0.5, 2.0*delta[jj], n*beta[jj]**2/sigma)
+            psi[jj] = gigrnd(a-0.5, 2.0*delta[jj], n*beta[jj]**2/sigma)
         psi[psi>1] = 1.0
 
         if phi_updt == True:
@@ -276,7 +270,6 @@ def parse_ref(ref_file, chrom):
     print('... %d SNPs on chromosome %d read from %s ...' % (len(ref_dict['SNP']), chrom, ref_file))
     return ref_dict
 
-
 def parse_bim(bim_file, chrom):
     print('... parse bim file: %s ...' % (bim_file + '.bim'))
 
@@ -291,7 +284,6 @@ def parse_bim(bim_file, chrom):
 
     print('... %d SNPs on chromosome %d read from %s ...' % (len(vld_dict['SNP']), chrom, bim_file + '.bim'))
     return vld_dict
-
 
 def parse_sumstats(ref_dict, vld_dict, sst_file, n_subj):
     print('... parse sumstats file: %s ...' % sst_file)
@@ -400,7 +392,6 @@ def parse_sumstats(ref_dict, vld_dict, sst_file, n_subj):
 
     return sst_dict
 
-
 def parse_ldblk(ldblk_dir, sst_dict, chrom):
     print('... parse reference LD on chromosome %d ...' % chrom)
 
@@ -501,7 +492,6 @@ def parse_param():
     print('\n')
     return param_dict
 
-
 def main():
     param_dict = parse_param()
 
@@ -509,24 +499,21 @@ def main():
         print('##### process chromosome %d #####' % int(chrom))
 
         if '1kg' in os.path.basename(param_dict['ref_dir']):
-            ref_dict = parse_genet.parse_ref(param_dict['ref_dir'] + '/snpinfo_1kg_hm3', int(chrom))
+            ref_dict = parse_ref(param_dict['ref_dir'] + '/snpinfo_1kg_hm3', int(chrom))
         elif 'ukbb' in os.path.basename(param_dict['ref_dir']):
-            ref_dict = parse_genet.parse_ref(param_dict['ref_dir'] + '/snpinfo_ukbb_hm3', int(chrom))
+            ref_dict = parse_ref(param_dict['ref_dir'] + '/snpinfo_ukbb_hm3', int(chrom))
 
-        vld_dict = parse_genet.parse_bim(param_dict['bim_prefix'], int(chrom))
+        vld_dict = parse_bim(param_dict['bim_prefix'], int(chrom))
 
-        sst_dict = parse_genet.parse_sumstats(ref_dict, vld_dict, param_dict['sst_file'], param_dict['n_gwas'])
+        sst_dict = parse_sumstats(ref_dict, vld_dict, param_dict['sst_file'], param_dict['n_gwas'])
 
-        ld_blk, blk_size = parse_genet.parse_ldblk(param_dict['ref_dir'], sst_dict, int(chrom))
+        ld_blk, blk_size = parse_ldblk(param_dict['ref_dir'], sst_dict, int(chrom))
 
-        mcmc_gtb.mcmc(param_dict['a'], param_dict['b'], param_dict['phi'], sst_dict, param_dict['n_gwas'], ld_blk, blk_size,
+        mcmc(param_dict['a'], param_dict['b'], param_dict['phi'], sst_dict, param_dict['n_gwas'], ld_blk, blk_size,
             param_dict['n_iter'], param_dict['n_burnin'], param_dict['thin'], int(chrom), param_dict['out_dir'], param_dict['beta_std'],
 	    param_dict['write_psi'], param_dict['write_pst'], param_dict['seed'])
 
         print('\n')
 
-
 if __name__ == '__main__':
     main()
-
-
