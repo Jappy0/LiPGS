@@ -5,7 +5,7 @@ import argparse
 
 def extract_fid_iid(phenotype_file):
     """Extract FID and IID from phenotype file."""
-    phenotype_df = pd.read_csv(phenotype_file, sep='\s+')  # Updated from delim_whitespace=True
+    phenotype_df = pd.read_csv(phenotype_file, sep=r'\s+')  # Updated from delim_whitespace=True
     fid_iid_df = phenotype_df[['FID', 'IID']]
     return fid_iid_df
 
@@ -26,22 +26,22 @@ def generate_files(groups, phenotype_file, plink_prefix, output_dir):
         generate_plink_files(group_file, plink_prefix, output_dir, i + 1, is_target=True)
 
         # Discovery data: individuals not in the current group
-        discovery_group_file = os.path.join(output_dir, f"discovery_group_{i + 1}.txt")
-        generate_discovery_group_file(group_file, plink_prefix, discovery_group_file)
-        generate_plink_files(discovery_group_file, plink_prefix, output_dir, i + 1, is_target=False)
+        discovery_file = os.path.join(output_dir, f"discovery_{i + 1}.txt")
+        generate_discovery_file(group_file, plink_prefix, discovery_file)
+        generate_plink_files(discovery_file, plink_prefix, output_dir, i + 1, is_target=False)
 
-def generate_discovery_group_file(group_file, plink_prefix, discovery_group_file):
+def generate_discovery_file(group_file, plink_prefix, discovery_file):
     """Create discovery group by excluding the target individuals."""
     target_data = pd.read_csv(group_file, sep='\t', header=None, names=['FID', 'IID'])
 
     # Read FIDs and IIDs from the .fam file
-    fam_data = pd.read_csv(f"{plink_prefix}.fam", sep='\s+', header=None, names=['FID', 'IID', 'p1', 'p2', 'sex', 'pheno'])
+    fam_data = pd.read_csv(f"{plink_prefix}.fam", sep=r'\s+', header=None, names=['FID', 'IID', 'p1', 'p2', 'sex', 'pheno'])
     
     # Get individuals not in the target group (i.e., discovery group)
     discovery_data = fam_data[~fam_data[['FID', 'IID']].apply(tuple, axis=1).isin(target_data[['FID', 'IID']].apply(tuple, axis=1))]
 
     # Write the discovery FID/IID to a file
-    discovery_data[['FID', 'IID']].to_csv(discovery_group_file, sep='\t', header=False, index=False)
+    discovery_data[['FID', 'IID']].to_csv(discovery_file, sep='\t', header=False, index=False)
 
 def generate_plink_files(group_file, plink_prefix, output_dir, group_index, is_target):
     """Generate PLINK binary files for either the target or discovery groups."""

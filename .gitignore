@@ -3,3 +3,6 @@
 /ConLiGen
 /output
 config.yaml
+/src/.snakemake
+/src/output_binary
+/src/output_alda
