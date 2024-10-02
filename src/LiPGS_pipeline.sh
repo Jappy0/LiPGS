@@ -11,7 +11,35 @@
 module load Anaconda3/2024.06-1
 source activate PGS
 
-# Run Snakemake, assuming Snakefile is in the same directory
-snakemake create_root_dir extract_phenotype split_data
+# Define paths directly in the script
+BFILE="/hpcfs/users/a1236780/Repos/LiPGS/ConLiGen/Conligen_filtered_withrsid"
+PHENO_FILE="/hpcfs/users/a1236780/Repos/LiPGS/ConLiGen/ConLiGen_phenotypes_2021_Niguse_withPCs_Country_updated.txt"
+COVAR_FILE="/hpcfs/users/a1236780/Repos/LiPGS/ConLiGen/covariates_for_adjustment.txt"
+PHENO_TYPE="binary"  # Change to "continuous" if using a continuous trait
+REF_DIR="/hpcfs/users/a1236780/Repos/PGS/PRScs/LD_reference/1KG/ldblk_1kg_eur"
+PATH_TO_PRScs="/hpcfs/users/a1236780/Repos/LiPGS/src/PRScs.py"
+NUM_FOLDS=5  # Number of folds for cross-validation
+ROOT_DIR="output_binary"  # Change to "output_alda" for continuous traits
 
+# Create root directory
+mkdir -p "$ROOT_DIR"
+
+# Run the Python pipeline
+python pipeline.py \
+    --bfile "$BFILE" \
+    --pheno_file "$PHENO_FILE" \
+    --covar_file "$COVAR_FILE" \
+    --pheno_type "$PHENO_TYPE" \
+    --ref_dir "$REF_DIR" \
+    --path_to_prscs "$PATH_TO_PRScs" \
+    --num_folds "$NUM_FOLDS" \
+    --root_dir "$ROOT_DIR"
+
+echo "Pipeline execution completed."
+
+
+# Run Snakemake, assuming Snakefile is in the same directory
+# snakemake extract_phenotype split_data
+# snakemake -F
 # rm -rf .snakemake/ extract_phenotype split_data --configfile config.yaml 
+# nextflow run main.nf -c nextflow.config

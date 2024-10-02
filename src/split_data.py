@@ -14,7 +14,7 @@ def split_into_groups(fid_iid_df, num_groups=5):
     groups = np.array_split(fid_iid_df.sample(frac=1), num_groups)  # Shuffle before splitting
     return groups
 
-def generate_files(groups, phenotype_file, plink_prefix, output_dir):
+def generate_files(groups, plink_prefix, pheno_file, output_dir):
     """Generate target and discovery phenotype data and PLINK binary files."""
     os.makedirs(output_dir, exist_ok=True)
 
@@ -26,22 +26,30 @@ def generate_files(groups, phenotype_file, plink_prefix, output_dir):
         generate_plink_files(group_file, plink_prefix, output_dir, i + 1, is_target=True)
 
         # Discovery data: individuals not in the current group
-        discovery_file = os.path.join(output_dir, f"discovery_{i + 1}.txt")
-        generate_discovery_file(group_file, plink_prefix, discovery_file)
-        generate_plink_files(discovery_file, plink_prefix, output_dir, i + 1, is_target=False)
+        discovery_ID_file = os.path.join(output_dir, f"discovery_FID_IID_{i + 1}.txt")
+        discovery_pheno_file = os.path.join(output_dir, f"discovery_pheno_{i + 1}.txt")
+        generate_discovery_file(group_file, pheno_file, discovery_ID_file, discovery_pheno_file)
+        generate_plink_files(discovery_ID_file, plink_prefix, output_dir, i + 1, is_target=False)
 
-def generate_discovery_file(group_file, plink_prefix, discovery_file):
-    """Create discovery group by excluding the target individuals."""
+def generate_discovery_file(group_file, pheno_file, discovery_ID_file, discovery_pheno_file):
+    """Create discovery group by excluding the target individuals and generate discovery phenotype data as integers."""
+    # Read the target individuals' FID and IID from the group file
     target_data = pd.read_csv(group_file, sep='\t', header=None, names=['FID', 'IID'])
 
-    # Read FIDs and IIDs from the .fam file
-    fam_data = pd.read_csv(f"{plink_prefix}.fam", sep=r'\s+', header=None, names=['FID', 'IID', 'p1', 'p2', 'sex', 'pheno'])
-    
-    # Get individuals not in the target group (i.e., discovery group)
-    discovery_data = fam_data[~fam_data[['FID', 'IID']].apply(tuple, axis=1).isin(target_data[['FID', 'IID']].apply(tuple, axis=1))]
+    # Read the phenotype file with the actual header
+    pheno_data = pd.read_csv(pheno_file, sep='\t')
 
-    # Write the discovery FID/IID to a file
-    discovery_data[['FID', 'IID']].to_csv(discovery_file, sep='\t', header=False, index=False)
+    # Filter out the target individuals from the phenotype data
+    discovery_data = pheno_data[~pheno_data[['FID', 'IID']].apply(tuple, axis=1).isin(target_data[['FID', 'IID']].apply(tuple, axis=1))]
+
+    # Convert all phenotype columns to integer type, excluding the first two columns (FID and IID)
+    discovery_data.iloc[:, 2:] = discovery_data.iloc[:, 2:].fillna(0).astype(int)
+
+    # Write the discovery FID/IID to the discovery ID file
+    discovery_data[['FID', 'IID']].to_csv(discovery_ID_file, sep='\t', header=False, index=False)
+    
+    # Write the discovery phenotype data (excluding target individuals) to the discovery phenotype file
+    discovery_data.to_csv(discovery_pheno_file, sep='\t', header=True, index=False)
 
 def generate_plink_files(group_file, plink_prefix, output_dir, group_index, is_target):
     """Generate PLINK binary files for either the target or discovery groups."""
@@ -64,7 +72,7 @@ def main():
 
     fid_iid_df = extract_fid_iid(args.phenotype_file)
     groups = split_into_groups(fid_iid_df, num_groups=args.num_groups)
-    generate_files(groups, args.phenotype_file, args.plink_prefix, args.output_dir)
+    generate_files(groups, args.plink_prefix, args.phenotype_file, args.output_dir)
 
 if __name__ == "__main__":
     main()
