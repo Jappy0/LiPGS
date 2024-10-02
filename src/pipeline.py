@@ -46,8 +46,8 @@ def run_gwas(fold, root_dir, covar, pheno_type):
     subprocess.run(command, shell=True, check=True)
     print(f"GWAS completed for fold {fold}. Output: {output_prefix}.assoc.{pheno_type}")
 
-def add_a2_to_gwas(gwas_file, bim_file, output_file):
-    """Add A2 values to the GWAS summary statistics file based on SNP values from the BIM file."""
+def filter_gwas(gwas_file, bim_file, output_prefix):
+    """Generate four different GWAS summary statistics files based on BIM data."""
     
     # Read the BIM file (no header; second column contains SNP IDs, sixth column contains A2 values)
     bim_data = pd.read_csv(bim_file, sep=r'\s+', header=None, usecols=[1, 5], names=['SNP', 'A2'])
@@ -55,24 +55,79 @@ def add_a2_to_gwas(gwas_file, bim_file, output_file):
     # Read the GWAS summary statistics file with headers
     gwas_data = pd.read_csv(gwas_file, sep=r'\s+')
     
-    # Check if 'SNP' is in the columns of the GWAS data
-    if 'SNP' not in gwas_data.columns:
-        print("GWAS Data does not contain 'SNP' column. Current columns are:", gwas_data.columns.tolist())
-        return
+    # Check if 'SNP' and necessary columns are in the GWAS data
+    required_cols = ['SNP', 'A1', 'SE', 'P', 'OR'] #'BETA', 
+    for col in required_cols:
+        if col not in gwas_data.columns:
+            print(f"GWAS Data does not contain '{col}' column. Current columns are:", gwas_data.columns.tolist())
+            return
 
     # Create a new column 'A2' in the GWAS data by mapping SNPs to their A2 values from BIM data
     gwas_data['A2'] = gwas_data['SNP'].map(bim_data.set_index('SNP')['A2'])
 
-    # Reorder columns to insert A2 after A1
-    cols = list(gwas_data.columns)
-    a1_index = cols.index('A1')
-    cols.insert(a1_index + 1, 'A2')  # Insert A2 after A1
-    gwas_data = gwas_data[cols]
+    # Generate four different files based on the requested columns
+    
+    # # 1. beta_se file (SNP, A1, A2, BETA, SE)
+    # beta_se = gwas_data[['SNP', 'A1', 'A2', 'BETA', 'SE']]
+    # beta_se_file = f"{output_prefix}_beta_se.txt"
+    # beta_se.to_csv(beta_se_file, sep='\t', index=False)
+    # print(f"Generated beta_se file: {beta_se_file}")
 
-    # Write the updated GWAS data to the output file
-    gwas_data.to_csv(output_file, sep='\t', index=False)
+    # 2. or_se file (SNP, A1, A2, OR, SE)
+    or_se = gwas_data[['SNP', 'A1', 'A2', 'OR', 'SE']]
+    or_se_file = f"{output_prefix}_or_se.txt"
+    or_se.to_csv(or_se_file, sep='\t', index=False)
+    print(f"Generated or_se file: {or_se_file}")
 
-    print(f"Added A2 values to GWAS data. Output saved to: {output_file}")
+    # # 3. beta_p file (SNP, A1, A2, BETA, P)
+    # beta_p = gwas_data[['SNP', 'A1', 'A2', 'BETA', 'P']]
+    # beta_p_file = f"{output_prefix}_beta_p.txt"
+    # beta_p.to_csv(beta_p_file, sep='\t', index=False)
+    # print(f"Generated beta_p file: {beta_p_file}")
+
+    # 4. or_p file (SNP, A1, A2, OR, P)
+    or_p = gwas_data[['SNP', 'A1', 'A2', 'OR', 'P']]
+    or_p_file = f"{output_prefix}_or_p.txt"
+    or_p.to_csv(or_p_file, sep='\t', index=False)
+    print(f"Generated or_p file: {or_p_file}")
+    # Return the number of GWAS data points (rows in gwas_data)
+    num_gwas = gwas_data.shape[0]
+    print(f"Number of GWAS data points: {num_gwas}")
+    
+    return num_gwas
+
+
+# Example usage:
+# filter_gwas("gwas_summary.txt", "example.bim", "output_gwas")
+
+
+# def filter_gwas(gwas_file, bim_file, output_file):
+#     """Add A2 values to the GWAS summary statistics file based on SNP values from the BIM file."""
+    
+#     # Read the BIM file (no header; second column contains SNP IDs, sixth column contains A2 values)
+#     bim_data = pd.read_csv(bim_file, sep=r'\s+', header=None, usecols=[1, 5], names=['SNP', 'A2'])
+    
+#     # Read the GWAS summary statistics file with headers
+#     gwas_data = pd.read_csv(gwas_file, sep=r'\s+')
+    
+#     # Check if 'SNP' is in the columns of the GWAS data
+#     if 'SNP' not in gwas_data.columns:
+#         print("GWAS Data does not contain 'SNP' column. Current columns are:", gwas_data.columns.tolist())
+#         return
+
+#     # Create a new column 'A2' in the GWAS data by mapping SNPs to their A2 values from BIM data
+#     gwas_data['A2'] = gwas_data['SNP'].map(bim_data.set_index('SNP')['A2'])
+
+#     # Reorder columns to insert A2 after A1
+#     cols = list(gwas_data.columns)
+#     a1_index = cols.index('A1')
+#     cols.insert(a1_index + 1, 'A2')  # Insert A2 after A1
+#     gwas_data = gwas_data[cols]
+
+#     # Write the updated GWAS data to the output file
+#     gwas_data.to_csv(output_file, sep='\t', index=False)
+
+#     print(f"Added A2 values to GWAS data. Output saved to: {output_file}")
 
 def run_prscs(root_dir, path_to_prscs, ref_dir, summary_stats, bfile, n_gwas, fold):
     """Run PRScs to calculate PRS."""
@@ -136,22 +191,22 @@ def main():
 
     args = parser.parse_args()
 
-    # # Step 1: Create root directory
-    # create_root_dir(args.root_dir)
-    # # Step 2: Extract phenotype
-    # phenotype_file = extract_phenotype(args.pheno_file, args.root_dir, args.pheno_type)
-    # # Step 3: Split data
-    # split_data(phenotype_file, args.bfile, os.path.join(args.root_dir, "fold_data"), args.num_folds)
+    # Step 1: Create root directory
+    create_root_dir(args.root_dir)
+    # Step 2: Extract phenotype
+    phenotype_file = extract_phenotype(args.pheno_file, args.root_dir, args.pheno_type)
+    # Step 3: Split data
+    split_data(phenotype_file, args.bfile, os.path.join(args.root_dir, "fold_data"), args.num_folds)
 
     # Step 4: Run GWAS for each fold
     for fold in range(1, args.num_folds+1):
-        # run_gwas(fold, args.root_dir, args.covar_file, args.pheno_type)
+        run_gwas(fold, args.root_dir, args.covar_file, args.pheno_type)
         # Step 5: Calculate PRS for each fold
         summary_stats = os.path.join(args.root_dir, f"gwas_fold_{fold}.Response.assoc.logistic")
-        bfile = os.path.join(args.root_dir, f"fold_data/target_{fold}")
-        summary_stats_a2 = os.path.join(args.root_dir, f"gwas_fold_{fold}.assoc.logistic_a2")
-        add_a2_to_gwas(summary_stats, args.bfile+".bim", summary_stats_a2)
-        run_prscs(args.root_dir, args.path_to_prscs, args.ref_dir, summary_stats_a2, bfile, args.num_folds, fold)
+        target_bfile = os.path.join(args.root_dir, f"fold_data/target_{fold}")
+        summary_stats_prefix = os.path.join(args.root_dir, f"gwas_fold_{fold}.assoc.logistic")
+        num_gwas = filter_gwas(summary_stats, args.bfile+".bim", summary_stats_prefix)
+        run_prscs(args.root_dir, args.path_to_prscs, args.ref_dir, summary_stats_prefix+"_or_se.txt", target_bfile, num_gwas, fold)
 
     # Step 6: Combine PRS scores
     combine_prs(args.root_dir, args.num_folds)
