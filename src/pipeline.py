@@ -260,7 +260,7 @@ def main():
     # Step 4: Run GWAS for each fold
     for fold in range(1, args.num_folds+1):
     # for fold in range(2, args.num_folds+1):
-        run_gwas(fold, args.root_dir, args.covar_file, args.threads)
+        run_gwas(fold, args.root_dir, args.covar_file, args.pheno_name, args.threads)
         # Step 5: Calculate PRS for each fold
         summary_stats = os.path.join(args.root_dir, f"gwas_fold_{fold}.Response.glm.logistic")
         summary_stats_prefix = os.path.join(args.root_dir, f"gwas_fold_{fold}.glm.logistic")
