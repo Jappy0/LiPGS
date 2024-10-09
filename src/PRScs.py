@@ -339,7 +339,15 @@ def parse_sumstats(ref_dict, vld_dict, sst_file, n_subj):
                 if 'BETA' in header:
                     beta = float(ll[3])
                 elif 'OR' in header:
-                    beta = np.log(float(ll[3]))
+                    # beta = np.log(float(ll[3]))
+
+                    try:
+                        # Assuming ll[3] should be present; modify as needed
+                        beta = np.log(float(ll[3]))
+                    except IndexError as e:
+                        print(f"Error at line: {line}")
+                        print(f"Split result: {ll}")
+                        raise e  # Re-raise the exception after printing for debugging
 
                 if 'SE' in header:
                     se = float(ll[4])
@@ -354,7 +362,15 @@ def parse_sumstats(ref_dict, vld_dict, sst_file, n_subj):
                 if 'BETA' in header:
                     beta = float(ll[3])
                 elif 'OR' in header:
-                    beta = np.log(float(ll[3]))
+                    # beta = np.log(float(ll[3]))
+                    # Add a check to print the line when the expected number of columns is not met
+                    try:
+                        # Assuming ll[3] should be present; modify as needed
+                        beta = np.log(float(ll[3]))
+                    except IndexError as e:
+                        print(f"Error at line: {line}")
+                        print(f"Split result: {ll}")
+                        raise e  # Re-raise the exception after printing for debugging
 
                 if 'SE' in header:
                     se = float(ll[4])
