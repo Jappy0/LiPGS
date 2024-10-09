@@ -56,7 +56,10 @@ def g(x, sd, td, f1, f2):
 
 def gigrnd(p, a, b):
     # setup -- sample from the two-parameter version gig(lam,omega)
-    p = float(p); a = float(a); b = float(b)
+    # p = float(p); a = float(a); b = float(b)
+    p = float(p[0])
+    a = float(a[0])
+    b = float(b[0])
     lam = p
     omega = math.sqrt(a*b)
 
