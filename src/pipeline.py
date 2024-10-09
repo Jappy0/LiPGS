@@ -48,7 +48,7 @@ def extract_ref_allele(bim_file, output_file):
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while extracting reference alleles: {e}")
 
-def run_gwas(fold, root_dir, covar, threads_num):
+def run_gwas(fold, root_dir, covar, pheno_name, threads_num):
     """Run GWAS for each fold."""
     # bed_f = os.path.join(root_dir, f"fold_data/discovery_{fold}.bed")
     # bim_f = os.path.join(root_dir, f"fold_data/discovery_{fold}.bim")
@@ -64,7 +64,6 @@ def run_gwas(fold, root_dir, covar, threads_num):
     # extract_ref_allele(b_f+".bim", ref_allele)
     pgen_output = os.path.join(root_dir, f"fold_data/discovery_pgen_ref_fixed_{fold}") 
     command1 = f"plink2 --bfile {b_f} --ref-allele {b_f}.bim 6 2 --make-pgen --threads {threads_num} --out {pgen_output}"
-    
     try:
         print(f"Running Step 1: Adjust REF/ALT Alleles with command: {command1}")
         subprocess.run(command1, shell=True, check=True)
@@ -73,7 +72,7 @@ def run_gwas(fold, root_dir, covar, threads_num):
         print(f"Error occurred during Step 1: {e}")
         return
 
-    command2 = f"plink2 --pfile {pgen_output} --pheno {pheno} --pheno-name Response --covar {covar} --covar-name Age,Sex,chip1,zPC1,zPC2,zPC3,zPC4 --covar-quantile-normalize --glm hide-covar no-firth omit-ref --ci 0.95 --threads {threads_num} --out {output_prefix}"#--pfile {pgen_output} --make-pgen 
+    command2 = f"plink2 --pfile {pgen_output} --pheno {pheno} --pheno-name {pheno_name} --covar {covar} --covar-name Age,Sex,chip1,zPC1,zPC2,zPC3,zPC4 --covar-quantile-normalize --glm hide-covar no-firth omit-ref --ci 0.95 --threads {threads_num} --out {output_prefix}"#--pfile {pgen_output} --make-pgen 
 
     try:
         print(f"Running Step 2: Run GWAS with the Adjusted File using command: {command2}")
@@ -240,6 +239,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run the GWAS and PRS pipeline")
     parser.add_argument('--bfile', required=True, help="Path to PLINK bfile prefix")
     parser.add_argument('--pheno_file', required=True, help="Path to phenotype file")
+    parser.add_argument('--pheno_name', required=True, help="Phenotype name in the file of --pheno_file")
     parser.add_argument('--covar_file', required=True, help="Path to covariates file")
     parser.add_argument('--pheno_type', choices=['binary', 'continuous'], required=True, help="Type of phenotype")
     parser.add_argument('--ref_dir', required=True, help="Path to PRScs reference directory")
