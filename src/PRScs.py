@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 '''
-This script merges all scripts related to PRS-CS into one file.
+This script merges all scripts related to PRS-CS into one file. If you want to use this script, please remember to cite the source codes (https://github.com/getian107/PRScs?tab=readme-ov-file) and the original research. 
+T Ge, CY Chen, Y Ni, YCA Feng, JW Smoller. Polygenic Prediction via Bayesian Regression and Continuous Shrinkage Priors.
+           Nature Communications, 10:1776, 2019.
 '''
 
 """

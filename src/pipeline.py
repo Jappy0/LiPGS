@@ -258,9 +258,9 @@ def main():
     # parser.add_argument('--path_to_prscs', required=True, help="Path to PRScs.py script")
     parser.add_argument('--num_folds', type=int, default=5, help="Number of folds for cross-validation")
     parser.add_argument('--root_dir', default='output', help="Root output directory")
-    parser.add_argument('--fold_data_dir', help="Root output directory")
-    parser.add_argument('--gwas_dir', help="Root output directory")
-    parser.add_argument('--prscs_dir', help="Root output directory")
+    parser.add_argument('--fold_data_dir', help="Splited data output directory")
+    parser.add_argument('--gwas_dir', help="GWAS output directory")
+    parser.add_argument('--prscs_dir', help="PRScs output directory")
     parser.add_argument('--model', required=True, help="Model used for gwas.")
     parser.add_argument('--threads', type=int, default=1, help="Threads or processes number for PLINK2 or PRScs.")
     
