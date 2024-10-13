@@ -1,0 +1,50 @@
+/gpfs/apps/icl/software/Anaconda3/2024.06-1/lib/python3.12/site-packages/numpy/core/fromnumeric.py:59: FutureWarning: 'DataFrame.swapaxes' is deprecated and will be removed in a future version. Please use 'DataFrame.transpose' instead.
+  return bound(*args, **kwds)
+Exception: Exception occurred in Worker-17 with the following arguments:
+Arg 0: 18
+Arg 1: '/hpcfs/users/a1236780/Repos/LiPGS/results/binary20241012/prscs'
+Arg 2: '/hpcfs/users/a1236780/Repos/LiPGS/src/PRScs.py'
+Arg 3: '/hpcfs/users/a1236780/Repos/PGS/PRScs/LD_reference/1KG/ldblk_1kg_eur'
+Arg 4: '/hpcfs/users/a1236780/Repos/LiPGS/results/binary20241012/gwas/gwas_fold_1.glm.logistic.hybrid_or_p.txt'
+Arg 5: '/hpcfs/users/a1236780/Repos/LiPGS/results/binary20241012/fold_data/target_1'
+Arg 6: 1892
+Arg 7: 1
+Traceback (most recent call last):
+  File [36m"/home/a1236780/.local/lib/python3.12/site-packages/mpire/worker.py"[39;49;00m, line [34m482[39;49;00m, in _run_safely[37m[39;49;00m
+[37m    [39;49;00mresults = func()[37m[39;49;00m
+[37m              [39;49;00m^^^^^^[37m[39;49;00m
+  File [36m"/home/a1236780/.local/lib/python3.12/site-packages/mpire/worker.py"[39;49;00m, line [34m417[39;49;00m, in _func[37m[39;49;00m
+[37m    [39;49;00m_results = func(*args) [34mif[39;49;00m [36mself[39;49;00m.is_apply_func [34melse[39;49;00m func(args)[37m[39;49;00m
+[37m                                                      [39;49;00m^^^^^^^^^^[37m[39;49;00m
+  File [36m"/home/a1236780/.local/lib/python3.12/site-packages/mpire/worker.py"[39;49;00m, line [34m591[39;49;00m, in _helper_func_with_idx[37m[39;49;00m
+[37m    [39;49;00m[34mreturn[39;49;00m args[[34m0[39;49;00m], [36mself[39;49;00m._call_func(func, args[[34m1[39;49;00m])[37m[39;49;00m
+[37m                    [39;49;00m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[37m[39;49;00m
+  File [36m"/home/a1236780/.local/lib/python3.12/site-packages/mpire/worker.py"[39;49;00m, line [34m616[39;49;00m, in _call_func[37m[39;49;00m
+[37m    [39;49;00m[34mreturn[39;49;00m func(*args, **kwargs)[37m[39;49;00m
+[37m           [39;49;00m^^^^^^^^^^^^^^^^^^^^^[37m[39;49;00m
+  File [36m"/hpcfs/users/a1236780/Repos/LiPGS/src/pipeline.py"[39;49;00m, line [34m194[39;49;00m, in run_prscs_single_chrom[37m[39;49;00m
+[37m    [39;49;00m[34mwith[39;49;00m [36mopen[39;49;00m(log_file, [33m'[39;49;00m[33mw[39;49;00m[33m'[39;49;00m) [34mas[39;49;00m log:[37m[39;49;00m
+[37m         [39;49;00m^^^^^^^^^^^^^^^^^^^[37m[39;49;00m
+[91mBrokenPipeError[39;49;00m: [Errno 108] Cannot send after transport endpoint shutdown: '/hpcfs/users/a1236780/Repos/LiPGS/results/binary20241012/prscs/prs_fold_1_chr18.log'[37m[39;49;00m
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/hpcfs/users/a1236780/Repos/LiPGS/src/pipeline.py", line 448, in <module>
+    main()
+  File "/hpcfs/users/a1236780/Repos/LiPGS/src/pipeline.py", line 443, in main
+    run_prscs(fold, args)
+  File "/hpcfs/users/a1236780/Repos/LiPGS/src/pipeline.py", line 223, in run_prscs
+    pool.map(run_prscs_single_chrom, cur_args, progress_bar=False)
+  File "/home/a1236780/.local/lib/python3.12/site-packages/mpire/pool.py", line 467, in map
+    results = self.map_unordered(
+              ^^^^^^^^^^^^^^^^^^^
+  File "/home/a1236780/.local/lib/python3.12/site-packages/mpire/pool.py", line 534, in map_unordered
+    return list(self.imap_unordered(func, iterable_of_args, iterable_len, max_tasks_active, chunk_size,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/a1236780/.local/lib/python3.12/site-packages/mpire/pool.py", line 788, in imap_unordered
+    self._handle_exception()
+  File "/home/a1236780/.local/lib/python3.12/site-packages/mpire/pool.py", line 926, in _handle_exception
+    raise exception
+BrokenPipeError: (108, 'Cannot send after transport endpoint shutdown')

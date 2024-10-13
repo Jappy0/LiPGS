@@ -6,4 +6,9 @@ config.yaml
 /src/.snakemake
 /src/output_binary
 /src/output_alda
+/src/output_alda2
 /src/output_binary1.9
+/data
+/results
+/new_results
+/src/archive

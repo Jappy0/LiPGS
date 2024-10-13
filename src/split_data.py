@@ -11,7 +11,7 @@ def extract_fid_iid(phenotype_file):
 
 def split_into_groups(fid_iid_df, num_groups=5):
     """Split the FID/IID data into specified number of groups."""
-    groups = np.array_split(fid_iid_df.sample(frac=1), num_groups)  # Shuffle before splitting
+    groups = np.array_split(fid_iid_df.sample(frac=1, random_state=42), num_groups)  # Shuffle before splitting
     return groups
 
 def generate_files(groups, plink_prefix, pheno_file, output_dir):
