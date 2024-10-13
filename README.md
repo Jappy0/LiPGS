@@ -2,7 +2,7 @@
 
 ### A pipeline to generate Polygenic scores for predicting Lithium treatment response (LiPGS) in patients with Bipolar Disorder (BD)
 
-**Important Note**  This pipeline is developed to generate Polygenic Scores (LiPGS) for predicting lithium treatment response in patients with Bipolar Disorder (BD). It is based on quality-controlled and imputed genotype data. Please note that this is not the official code from the original research. For details on quality control, imputation, and original results, refer to the original study listed below.
+**Important Note**  Please note that this is not the official code from the original research. This pipeline is based on quality-controlled and imputed genotype data. For details on quality control, imputation, and original results, refer to the original study.
 
 Amare, A.T., Thalamuthu, A., Schubert, K.O. et al. Association of polygenic score and the involvement of cholinergic and glutamatergic pathways with lithium treatment response in patients with bipolar disorder. Mol Psychiatry 28, 5251–5261 (2023). https://doi.org/10.1038/s41380-023-02149-1
 
