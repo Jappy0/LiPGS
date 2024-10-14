@@ -63,7 +63,7 @@ options:
 ```
 
 ## Note
-As this pipeline utilize [PRScs](https://github.com/getian107/PRScs?tab=readme-ov-file) to generate PRSs, please include the following script to your job submission script to specify the threads (e.g., ```N_THREADS=22```) used in scipy if you are running this pipeline on a shared computer cluster. Refer [PRScs](https://github.com/getian107/PRScs?tab=readme-ov-file) for details.
+As this pipeline utilize [PRScs](https://github.com/getian107/PRScs?tab=readme-ov-file) to generate PRSs, please include the following configuration to your job submission script to specify the threads (e.g., ```N_THREADS=22```) used in scipy if you are running this pipeline on a shared computer cluster. Refer [PRScs](https://github.com/getian107/PRScs?tab=readme-ov-file) for details.
 
 ```
 N_THREADS=22
