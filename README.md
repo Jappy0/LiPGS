@@ -74,7 +74,7 @@ export OMP_NUM_THREADS=$N_THREADS
 
 ## Example
 ```
-python pipeline.py --bfile /path/to/your_bfile_prefix 
+python ./src/pipeline.py --bfile /path/to/your_bfile_prefix 
                     --pheno_file /path/to/your_phenotype_file 
                     --pheno_name Response 
                     --covar_file /path/to/your_covariates_file 
