@@ -62,7 +62,20 @@ options:
   --threads THREADS     Threads or processes number for PLINK2 or PRScs
 ```
 
+## Note
+As this pipeline utilize [PRScs](https://github.com/getian107/PRScs?tab=readme-ov-file) to generate PRSs, please include the following script to your job submission script to specify the threads (e.g., ```N_THREADS=22```) used in scipy if you are running this pipeline on a shared computer cluster. Refer [PRScs](https://github.com/getian107/PRScs?tab=readme-ov-file) for details.
+
+```
+N_THREADS=22
+export MKL_NUM_THREADS=$N_THREADS
+export NUMEXPR_NUM_THREADS=$N_THREADS
+export OMP_NUM_THREADS=$N_THREADS
+```
+
 ## Example
 ```
 python pipeline.py --bfile /path/to/your_bfile_prefix --pheno_file /path/to/your_phenotype_file --pheno_name Response --covar_file /path/to/your_covariates_file --pheno_type binary --ref_dir /path/to/your_LD_reference --src_path /path/to/src --num_folds 5 --root_dir /results --threads 22 --model logistic.hybrid
 ```
+
+## Support
+Feel free to contact me if you have any questions and found any bugs.
