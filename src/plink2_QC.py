@@ -79,14 +79,21 @@ def run_plink_qc(bfile_prefix):
     
     print(f"Quality control completed. Final dataset: {bfile_prefix}_final_qc")
 
+def main():
+    # Argument parser setup
+    parser = argparse.ArgumentParser(description="Quality control using PLINK2")
+    parser.add_argument('--bfile_lst', required=True, help="The file containing a list of path to bfile prefix, one file prefix one line")
+    parser.add_argument('--output_prefix', required=True, help="Output prefix after quality control.")    
+    args = parser.parse_args()
+
+    # Merge the bfiles
+    merge_bfiles(args.bfile_lst, args.output_prefix)
+
+    run_plink_qc(args.output_prefix)
 
 # Example usage
 if __name__ == "__main__":
-    bfile_lst = "/hpcfs/users/a1236780/Repos/LiPGS/data/bfiles_list.txt"
-    # Output prefix for the merged PLINK files
-    output_prefix = "/hpcfs/users/a1236780/Repos/LiPGS/ConLiGen_combined_european_bfiles"
-    
-    # Merge the bfiles
-    merge_bfiles(bfile_lst, output_prefix)
+    main()
 
-    run_plink_qc(output_prefix)
+    
+
