@@ -74,7 +74,17 @@ export OMP_NUM_THREADS=$N_THREADS
 
 ## Example
 ```
-python pipeline.py --bfile /path/to/your_bfile_prefix --pheno_file /path/to/your_phenotype_file --pheno_name Response --covar_file /path/to/your_covariates_file --pheno_type binary --ref_dir /path/to/your_LD_reference --src_path /path/to/src --num_folds 5 --root_dir /results --threads 22 --model logistic.hybrid
+python pipeline.py --bfile /path/to/your_bfile_prefix 
+                    --pheno_file /path/to/your_phenotype_file 
+                    --pheno_name Response 
+                    --covar_file /path/to/your_covariates_file 
+                    --pheno_type binary 
+                    --ref_dir /path/to/your_LD_reference 
+                    --src_path /path/to/src 
+                    --num_folds 5 
+                    --root_dir /results 
+                    --threads 22 
+                    --model logistic.hybrid
 ```
 
 ## Support
