@@ -74,7 +74,7 @@ def split_data(args):
 def run_gwas(fold, args):
     """Run GWAS for each fold."""
     b_f = os.path.join(args.fold_data_dir, f"discovery_{fold}")
-    # b_f = args.bfile
+
     pheno = os.path.join(args.fold_data_dir, f"discovery_pheno_{fold}.txt")
 
     output_prefix = os.path.join(args.gwas_dir, f"gwas_fold_{fold}")
@@ -232,6 +232,7 @@ def merge_files(args):
         df_merged = pd.merge(df_merged, combined_df, on=['FID', 'IID'], how='left')
     else:
         df_merged = pd.merge(df_main, combined_df, on=['FID', 'IID'], how='left')
+    df_merged = df_merged[df_merged.Origin == "European"]
     df_merged.rename(columns={'SCORE1_AVG': f'PRScs_{args.pheno_type}'}, inplace=True)
     output_base_name = os.path.join(args.root_dir, f'ConLiGEN_phenotypes_{args.pheno_type}_with_PRSs')
     # Calculate the mean and standard deviation 
@@ -269,16 +270,16 @@ def main():
     args.gwas_dir = os.path.join(args.root_dir, "gwas")
     args.fold_data_dir = os.path.join(args.root_dir, "fold_data")
     args.prscs_dir = os.path.join(args.root_dir, "prscs")
-    create_root_dir(args)
+    # create_root_dir(args)
     # Step 2: extract and Split data
-    split_data(args)
-    if args.pheno_type != "binary":
-        args.pheno_name = "zAldaTOTAL"
-    # Step 4: Run GWAS for each fold
-    for fold in range(1, args.num_folds+1):
-        run_gwas(fold, args)
-        extract_gwas_columns(fold, args)
-        run_prscs(fold, args)
+    # split_data(args)
+    # if args.pheno_type != "binary":
+    #     args.pheno_name = "zAldaTOTAL"
+    # # Step 4: Run GWAS for each fold
+    # for fold in range(1, args.num_folds+1):
+    #     run_gwas(fold, args)
+    #     extract_gwas_columns(fold, args)
+    #     run_prscs(fold, args)
 
     merge_files(args)
 
